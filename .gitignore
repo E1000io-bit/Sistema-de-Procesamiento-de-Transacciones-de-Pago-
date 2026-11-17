@@ -1,0 +1,25 @@
+# Maven
+target/
+
+# Compilados
+*.class
+
+# Logs generados en cada ejecución
+logs/*
+!logs/.gitkeep
+
+# IntelliJ
+.idea/
+*.iml
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# VS Code
+.vscode/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
