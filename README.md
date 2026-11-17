@@ -4,11 +4,11 @@ Trabajo Práctico Final — Programación Concurrente y Paralela 2026 (FCEFyN, U
 
 ## Integrantes
 
--
--
--
--
--
+- Álvaro Bastía
+- Carlos Britez
+- Sol Género
+- Emilio Tarrago
+- Hebe Azul Usandivaras
 
 ## Requisitos
 
