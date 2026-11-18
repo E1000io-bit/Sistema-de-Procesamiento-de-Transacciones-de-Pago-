@@ -31,9 +31,6 @@ public class TransitionInvariant {
     /*
      Regex de la secuencia sobre el log aplanado ("T0T1T4..."): cada transición en orden, con
      cualquier cosa (lazy) en el medio, porque los invariantes se intercalan entre hilos.
-     (?!\d) evita que T1 matchee el comienzo de T10 en redes más grandes.
-     Ej.: T0(?!\d)(.*?)T4(?!\d)(.*?)T5(?!\d)(.*?)T9(?!\d)
-     InvariantAnalyzer puede armar su propio patrón con getSequence() si necesita otro formato.
     */
     public String toRegex() {
         StringJoiner sj = new StringJoiner("(.*?)");
