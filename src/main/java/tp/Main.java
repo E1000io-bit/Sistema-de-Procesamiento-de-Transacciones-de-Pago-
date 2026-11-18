@@ -1,7 +1,6 @@
 package tp;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +18,8 @@ import java.util.Locale;
  */
 public class Main {
 
-    private static final String LOG_FILE = "logs/transiciones.log";
+    private static final Path LOG_DIR = Path.of("logs");
+    private static final String LOG_NAME = "transiciones.log";
 
     public static void main(String[] args) throws IOException {
         // Si no se pasa ningún argumento, se usa la política aleatoria
@@ -32,8 +32,7 @@ public class Main {
         NetConfig cfg = NetConfig.paymentServiceProvider();
         Policy policy = createPolicy(policyName, cfg); //Check
         PetriNet rdp = new PetriNet(cfg);
-        Files.createDirectories(Path.of(LOG_FILE).getParent());
-        TransitionLogger.init(LOG_FILE);
+        TransitionLogger.init(LOG_DIR, LOG_NAME);
         Monitor monitor = new Monitor(rdp, policy);
 
         // 2. Lanzar los 7 hilos y esperar a que terminen todos (req. 3)
@@ -42,12 +41,12 @@ public class Main {
         List<Thread> threads = startWorkers(monitor);
         joinAll(threads);
         long elapsedMs = (System.nanoTime() - start) / 1_000_000;
-        TransitionLogger.getInstance().close();
+        TransitionLogger.close();
         System.out.println("Terminaron los " + threads.size() + " hilos.");
 
         // 3. Análisis de los invariantes de transición sobre el log, con regex (req. 8 y 13)
         InvariantAnalyzer analyzer = new InvariantAnalyzer(cfg.getTransitionInvariants());
-        InvariantReport report = analyzer.analyze(Path.of(LOG_FILE));
+        InvariantReport report = analyzer.analyze(LOG_DIR.resolve(LOG_NAME));
         printResults(report, elapsedMs);
     }
 

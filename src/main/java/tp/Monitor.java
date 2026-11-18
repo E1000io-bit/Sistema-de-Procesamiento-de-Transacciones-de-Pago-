@@ -1,5 +1,8 @@
 package tp;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+
 /**
  * Monitor de concurrencia que guía la ejecución de la red de Petri.
  *
@@ -26,6 +29,11 @@ package tp;
  * y nadie lo despertaría.
  * isFinished(): ya se completó la cantidad de invariantes pedida.
  *
+ * Errores: si después de un disparo checkPlaceInvariants() tira PlaceInvariantException
+ * (o falla la escritura del log), la red quedó en un estado que no se puede seguir usando.
+ * El monitor corta la simulación con finish() (despierta a todos y suelta el mutex, para
+ * que ningún hilo quede bloqueado y el programa termine, req. 3) y vuelve a tirar la
+ * excepción al hilo que disparó, para que se vea qué pasó. Los demás hilos salen con false.
  */
 public class Monitor implements MonitorInterface {
 
@@ -34,7 +42,10 @@ public class Monitor implements MonitorInterface {
     private final PetriNet rdp;
     private final Policy policy;
 
-    /** Lo pone en true finish(). Lo leen los hilos que despiertan de una cola. */
+    /**
+     * Lo pone en true finish(): cuando se completaron los invariantes pedidos o cuando se cortó
+     * la simulación por un error. Lo leen los hilos que despiertan de una cola.
+     */
     private volatile boolean finished = false;
 
     public Monitor(PetriNet rdp, Policy policy) {
@@ -50,8 +61,8 @@ public class Monitor implements MonitorInterface {
         boolean k = true;
 
         while (k) {
-            // break [simulación terminada]
-            if (rdp.isFinished()) {
+            // break [simulación terminada]: se completaron los invariantes, o se cortó por un error
+            if (finished || rdp.isFinished()) {
                 finish();
                 return false;
             }
@@ -60,9 +71,17 @@ public class Monitor implements MonitorInterface {
 
             if (k) {
                 // [k == true]: t se puede disparar
-                rdp.fire(transition);
-                rdp.checkPlaceInvariants();
-                TransitionLogger.getInstance().record(transition, Thread.currentThread().getName());
+                try {
+                    rdp.fire(transition);
+                    rdp.checkPlaceInvariants();
+                    TransitionLogger.record(transition, Thread.currentThread().getName());
+                } catch (PlaceInvariantException e) {
+                    abort("se violo un invariante de plaza despues de disparar T" + transition);
+                    throw e;
+                } catch (IOException e) {
+                    abort("no se pudo escribir el log despues de disparar T" + transition);
+                    throw new UncheckedIOException(e);
+                }
 
                 boolean[] vs = rdp.vectorEnable();    // sensibilizadas
                 boolean[] vc = queues.someOneThere();  // con hilos esperando
@@ -89,7 +108,7 @@ public class Monitor implements MonitorInterface {
                 // en someOneThere(), aunque todavía no se haya bloqueado en la cola.
                 queues.register(transition);
                 mutex.release();
-                queues.wait(transition);
+                queues.await(transition);
 
                 if (finished) {
                     // Lo despertó finish() con awakeAll(): no tiene el mutex, así que no lo libera.
@@ -134,6 +153,15 @@ public class Monitor implements MonitorInterface {
             Thread.currentThread().interrupt();
         }
         mutex.acquire();
+    }
+
+    /**
+     * Corta la simulación por un error. Se llama con el mutex tomado, antes de volver a tirar
+     * la excepción: avisa por consola y hace finish() para que el resto de los hilos termine.
+     */
+    private void abort(String reason) {
+        System.err.println("Simulacion cortada por " + Thread.currentThread().getName() + ": " + reason);
+        finish();
     }
 
     /**
