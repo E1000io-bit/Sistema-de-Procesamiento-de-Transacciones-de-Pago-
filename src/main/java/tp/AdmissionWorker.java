@@ -10,6 +10,6 @@ public class AdmissionWorker extends Worker{
 
     @Override
     protected int[] getSequence(){
-
+        return SEQUENCE.clone(); // copia: nadie puede cambiar la secuencia desde afuera
     }
 }
