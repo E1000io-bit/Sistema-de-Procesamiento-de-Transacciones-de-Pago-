@@ -66,12 +66,12 @@ public class Main {
      */
     private static List<Thread> startWorkers(MonitorInterface m) {
         List<Thread> threads = new ArrayList<>();
-        threads.add(new Thread(new AdmissionWorker(m), "Admision"));
+        threads.add(new Thread(new SettlementWorker(m), "Liquidacion-"));
         threads.add(new Thread(new CardWorker(m), "Tarjeta"));
         threads.add(new Thread(new HighRiskWorker(m), "AltoRiesgo"));
         threads.add(new Thread(new TransferWorker(m), "Transferencia"));
         for (int i = 1; i <= 3; i++) {
-            threads.add(new Thread(new SettlementWorker(m), "Liquidacion-" + i));
+            threads.add(new Thread(new AdmissionWorker(m), "Admision" + i));
         }
         for (Thread t : threads) {
             t.start();
