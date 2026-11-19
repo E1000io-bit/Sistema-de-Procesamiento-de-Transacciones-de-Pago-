@@ -23,7 +23,7 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         // Si no se pasa ningún argumento, se usa la política aleatoria
-        String policyName = "aleatoria";
+        String policyName = "priorizada";
         if (args.length > 0) {
             policyName = args[0];
         }
