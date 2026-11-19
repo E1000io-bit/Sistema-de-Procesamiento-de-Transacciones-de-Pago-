@@ -2,7 +2,6 @@ package tp;
 
 import java.util.concurrent.Semaphore;
 
-
 /*
  Exclusión mutua del monitor: un semáforo binario justo (FIFO).
  Quien llama a acquire() es el único dueño hasta que llame a release().

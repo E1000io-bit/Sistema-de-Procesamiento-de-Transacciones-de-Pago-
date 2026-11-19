@@ -18,7 +18,17 @@ Trabajo Práctico Final — Programación Concurrente y Paralela 2026 (FCEFyN, U
 ## Compilar y correr
 
 ```bash
-mvn compile exec:java
+mvn compile exec:java -Dexec.args="aleatoria"
+
+mvn compile exec:java -Dexec.args="priorizada"
+```
+
+## Solo correr (una vez compilado)
+
+```bash
+mvn exec:java -Dexec.args="aleatoria"
+
+mvn exec:java -Dexec.args="priorizada"
 ```
 
 O generando el jar:

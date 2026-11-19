@@ -11,26 +11,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/*
- Verifica los invariantes de transición con expresiones regulares sobre el log (req. 13).
-
- Pasos:
- 1. readSequence(): lee el log y lo aplana en una sola cadena con las transiciones en el orden
-    en que se dispararon, por ejemplo "T0T1T0T4T2T3T9...".
- 2. buildPattern(): arma UNA regex con todos los invariantes. Lo que tienen en común al principio
-    y al final (en esta red T0 y T9) se escribe una sola vez, y lo del medio va como alternativas:
-        T0(.*?)(?:(T1(.*?)T2(.*?)T3)|(T4(.*?)T5)|(T6(.*?)T7(.*?)T8))(.*?)T9
-    Los (.*?) permiten que en el medio haya transiciones de otros hilos, porque se intercalan.
-    Factorizar el principio importa: así cada T0 se empareja con la PRIMERA transición de
-    conflicto (T1, T4 o T6) que aparece después. Si cada invariante fuera una alternativa completa,
-    la regex probaría siempre primero "Tarjeta" y le robaría el T0 a transacciones de otros flujos,
-    que después quedarían sin T0 adelante y no se contarían.
- 3. analyze(): busca la primera coincidencia, la cuenta para el invariante que coincidió y la
-    reemplaza por lo que había en el medio (los grupos (.*?)): saca del log solo las transiciones
-    de ese invariante y deja las de los demás. Repite hasta que no haya más coincidencias. Lo que
-    queda es el sobrante: transacciones que no llegaron a cerrarse.
-*/
-
 public class InvariantAnalyzer {
 
     private static final Pattern TRANSITION = Pattern.compile("T\\d+");
