@@ -4,15 +4,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/*
- Resultado del análisis de invariantes de transición sobre el log (req. 8 y 13):
- cuántas veces se completó cada invariante y qué quedó del log sin formar un invariante completo.
-
- El sobrante (leftover) tendría que ser solo lo de las transacciones que estaban en curso cuando
- terminó la simulación (como mucho una por token de P0, o sea 3). Si sobra un invariante completo,
- el análisis o el log tienen un problema.
-*/
-
 public class InvariantReport {
 
     private final Map<String, Integer> countByInvariant;   // en el orden de NetConfig
