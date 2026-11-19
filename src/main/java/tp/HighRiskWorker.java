@@ -1,7 +1,7 @@
 package tp;
 
 public class HighRiskWorker extends Worker{
-
+    //Alto riesgo
     private static final int[] SEQUENCE = {4, 5};
     public HighRiskWorker(MonitorInterface monitor){
         super(monitor);
@@ -9,6 +9,6 @@ public class HighRiskWorker extends Worker{
 
     @Override
     protected int[] getSequence(){
-        return SEQUENCE.clone(); // copia: nadie puede cambiar la secuencia desde afuera
+        return SEQUENCE;
     }
 }

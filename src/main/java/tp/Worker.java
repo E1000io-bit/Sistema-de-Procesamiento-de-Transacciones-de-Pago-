@@ -16,6 +16,8 @@ public abstract class Worker implements Runnable{
     protected abstract int[] getSequence();
 
     @Override
+    public void run() {
+        //Guardo el recorrido
     public final void run() {   // final: las subclases no cambian el ciclo, solo la secuencia
         int[] sequence = getSequence();
         while (true) {
