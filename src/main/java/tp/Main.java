@@ -65,11 +65,6 @@ public class Main {
      * del join en P9. El nombre de cada Thread es el que queda registrado en el log.
      */
     private static List<Thread> startWorkers(MonitorInterface m) {
-        // TODO PROTOTIPO TEMPORAL: mientras no estén los Worker reales se usa PrototypeWorker.
-        // Cuando estén: borrar esta línea, descomentar el bloque de abajo y borrar PrototypeWorker.java.
-        return PrototypeWorker.startDefaultThreads(m);
-
-        /*
         List<Thread> threads = new ArrayList<>();
         threads.add(new Thread(new AdmissionWorker(m), "Admision"));
         threads.add(new Thread(new CardWorker(m), "Tarjeta"));
@@ -82,7 +77,6 @@ public class Main {
             t.start();
         }
         return threads;
-        */
     }
 
     /** Espera a que terminen todos los hilos. */
