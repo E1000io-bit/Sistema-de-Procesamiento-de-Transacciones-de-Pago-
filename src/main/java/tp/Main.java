@@ -6,16 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Punto de entrada del programa (req. 2).
- *
- * <p>Uso, desde la raíz del proyecto:
- * <pre>
- *   mvn compile exec:java -Dexec.args="aleatoria"
- *   mvn compile exec:java -Dexec.args="priorizada"
- * </pre>
- * Sin argumento usa la política aleatoria.
- */
 public class Main {
 
     private static final Path LOG_DIR = Path.of("logs");
