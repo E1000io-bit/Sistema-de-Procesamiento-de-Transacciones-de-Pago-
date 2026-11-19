@@ -12,6 +12,7 @@ public abstract class Worker implements Runnable{
 
     @Override
     public void run() {
+        //Guardo el recorrido
         int[] sequence = getSequence();
         while (true) {
             for (int transicion : sequence) {

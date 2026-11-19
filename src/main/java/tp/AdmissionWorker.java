@@ -1,6 +1,7 @@
 package tp;
 
 public class AdmissionWorker extends Worker{
+    //Antes del conflicto en P1
 
     private static final int[] SEQUENCE = {0};
 
@@ -10,6 +11,6 @@ public class AdmissionWorker extends Worker{
 
     @Override
     protected int[] getSequence(){
-
+        return SEQUENCE;
     }
 }
