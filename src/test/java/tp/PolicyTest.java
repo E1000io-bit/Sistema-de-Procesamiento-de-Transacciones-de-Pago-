@@ -1,0 +1,80 @@
+package tp;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
+
+/*
+ Req. 4: las dos políticas. Se prueba qué eligen con distintos vectores m = Vs AND Vc.
+ Las transiciones del conflicto en P1 son T1 (tarjeta), T4 (alto riesgo) y T6 (transferencia).
+*/
+class PolicyTest {
+
+    private static final int DRAWS = 30_000;
+
+    private static boolean[] m(int... enabled) {
+        boolean[] m = new boolean[10];
+        for (int t : enabled) {
+            m[t] = true;
+        }
+        return m;
+    }
+
+    @Test
+    void aleatoriaSoloEligeTransicionesDeM() {
+        Policy p = new RandomPolicy();
+        boolean[] m = m(1, 4, 6);
+        for (int i = 0; i < 1000; i++) {
+            int t = p.choose(m);
+            assertTrue(m[t], "Eligió T" + t + ", que no está en m");
+        }
+    }
+
+    @Test
+    void aleatoriaRepartePareja() {
+        Policy p = new RandomPolicy();
+        int[] count = new int[10];
+        for (int i = 0; i < DRAWS; i++) {
+            count[p.choose(m(1, 4, 6))]++;
+        }
+        for (int t : new int[]{1, 4, 6}) {
+            double share = (double) count[t] / DRAWS;
+            assertEquals(1.0 / 3, share, 0.03, "T" + t + " salió " + count[t] + " de " + DRAWS);
+        }
+    }
+
+    @Test
+    void priorizadaEligeAltoRiesgoSiempreQuePuede() {
+        Policy p = new PriorityPolicy(NetConfig.paymentServiceProvider().getPriorityOrder());
+        for (int i = 0; i < 1000; i++) {
+            assertEquals(4, p.choose(m(1, 4, 6)));
+            assertEquals(4, p.choose(m(4, 9)));
+        }
+    }
+
+    @Test
+    void priorizadaSinAltoRiesgoEligeAlAzarEntreLasDemas() {
+        Policy p = new PriorityPolicy(new int[]{4});
+        int[] count = new int[10];
+        for (int i = 0; i < DRAWS; i++) {
+            count[p.choose(m(1, 6))]++;
+        }
+        assertEquals(0, count[4]);
+        assertEquals(DRAWS, count[1] + count[6]);
+        assertEquals(0.5, (double) count[1] / DRAWS, 0.03, "T1 vs T6 tendría que ser 50/50");
+    }
+
+    @Test
+    void sinNadaParaElegirFalla() {
+        assertThrows(IllegalArgumentException.class, () -> new RandomPolicy().choose(new boolean[10]));
+        assertThrows(IllegalArgumentException.class, () -> new PriorityPolicy(new int[]{4}).choose(new boolean[10]));
+    }
+
+    @Test
+    void elOrdenDePrioridadNoSePuedeCambiarDesdeAfuera() {
+        int[] order = {4};
+        Policy p = new PriorityPolicy(order);
+        order[0] = 1;
+        assertEquals(4, p.choose(m(1, 4)));
+    }
+}
