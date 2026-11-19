@@ -1,7 +1,7 @@
 package tp;
 
 public class TransferWorker extends Worker {
-    //TRansferencia bancaria
+    //Transferencia bancaria
     private static final int[] SEQUENCE = {6, 7 ,8};
     public TransferWorker(MonitorInterface monitor){
         super(monitor);
@@ -9,6 +9,6 @@ public class TransferWorker extends Worker {
 
     @Override
     protected int[] getSequence(){
-        return SEQUENCE;
+        return SEQUENCE.clone(); // copia: nadie puede cambiar la secuencia desde afuera
     }
 }

@@ -9,6 +9,6 @@ public class HighRiskWorker extends Worker{
 
     @Override
     protected int[] getSequence(){
-        return SEQUENCE;
+        return SEQUENCE.clone(); // copia: nadie puede cambiar la secuencia desde afuera
     }
 }
