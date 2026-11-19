@@ -36,7 +36,7 @@ public class Monitor implements MonitorInterface {
                 return false;
             }
 
-            k = rdp.isEnable(transition);
+            k = rdp.isEnable(transition) && allowedNow(transition);
 
             if (k) {
                 // [k == true]: t se puede disparar
@@ -52,8 +52,8 @@ public class Monitor implements MonitorInterface {
                     throw new UncheckedIOException(e);
                 }
 
-                boolean[] vs = rdp.vectorEnable();    // sensibilizadas
                 boolean[] vc = queues.someOneThere();  // con hilos esperando
+                boolean[] vs = policy.filter(rdp.vectorEnable(), vc); // sensibilizadas que la política deja disparar
                 boolean[] m = and(vs, vc);
 
                 if (!isEmpty(m)) {
@@ -88,6 +88,14 @@ public class Monitor implements MonitorInterface {
             k = true; // reintenta
         }
         return false; // no se llega nunca: el loop siempre sale con return
+    }
+
+    /**
+     * true si la política deja disparar t en este momento. Si la frena, el hilo va a la cola
+     * como si t no estuviera sensibilizada, y lo despiertan cuando la política lo permita.
+     */
+    private boolean allowedNow(int t) {
+        return policy.filter(rdp.vectorEnable(), queues.someOneThere())[t];
     }
 
     /** m = Vs AND Vc, posición por posición. */

@@ -44,7 +44,7 @@ public class Main {
     private static Policy createPolicy(String name, NetConfig cfg) {
         return switch (name.toLowerCase(Locale.ROOT)) {
             case "aleatoria", "random" -> new RandomPolicy();
-            case "priorizada", "priority" -> new PriorityPolicy(cfg.getPriorityOrder());
+            case "priorizada", "priority" -> new PriorityPolicy(cfg.getPriorityOrder(), cfg.getPre());
             default -> throw new IllegalArgumentException(
                     "Politica desconocida: " + name + " (usar aleatoria o priorizada)");
         };

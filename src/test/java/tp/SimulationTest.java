@@ -12,7 +12,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -36,7 +35,7 @@ class SimulationTest {
         NetConfig cfg = NetConfig.paymentServiceProvider();
         Map<String, Policy> policies = new LinkedHashMap<>();
         policies.put("aleatoria", new RandomPolicy());
-        policies.put("priorizada", new PriorityPolicy(cfg.getPriorityOrder()));
+        policies.put("priorizada", new PriorityPolicy(cfg.getPriorityOrder(), cfg.getPre()));
 
         for (Map.Entry<String, Policy> e : policies.entrySet()) {
             Path dir = Files.createDirectories(tmp.resolve(e.getKey()));
@@ -148,10 +147,8 @@ class SimulationTest {
     }
 
     // req. 8a: la política priorizada tiene que favorecer al flujo de alto riesgo.
-    // HOY FALLA: la política solo elige a quién despertar entre los que esperan, y T4 casi nunca
-    // tiene libres P7 y P8 a la vez, así que la priorizada da lo mismo que la aleatoria.
-    // Sacar el @Disabled cuando la política también decida quién puede disparar en el conflicto.
-    @Disabled("Falla con el diseño actual de la política: ver comentario")
+    // Funciona porque la política también decide quién puede disparar en el conflicto (filter):
+    // mientras T4 espera, T1 y T6 no toman los recursos y P7 y P8 se juntan para T4.
     @Test
     void req8a_laPriorizadaFavoreceAlAltoRiesgo() {
         int aleatoria = reports.get("aleatoria").getCount("AltoRiesgo");
