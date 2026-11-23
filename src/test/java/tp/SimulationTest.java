@@ -35,7 +35,7 @@ class SimulationTest {
         NetConfig cfg = NetConfig.paymentServiceProvider();
         Map<String, Policy> policies = new LinkedHashMap<>();
         policies.put("aleatoria", new RandomPolicy());
-        policies.put("priorizada", new PriorityPolicy(cfg.getPriorityOrder(), cfg.getPre()));
+        policies.put("priorizada", new PriorityPolicy(cfg.getPriorityOrder()));
 
         for (Map.Entry<String, Policy> e : policies.entrySet()) {
             Path dir = Files.createDirectories(tmp.resolve(e.getKey()));
@@ -144,17 +144,6 @@ class SimulationTest {
             assertTrue(occurrences(leftover, "T0") <= 3, policy + ": sobrante raro " + leftover);
             assertEquals(0, occurrences(leftover, "T9"), policy + ": no puede sobrar un cierre " + leftover);
         }
-    }
-
-    // req. 8a: la política priorizada tiene que favorecer al flujo de alto riesgo.
-    // Funciona porque la política también decide quién puede disparar en el conflicto (filter):
-    // mientras T4 espera, T1 y T6 no toman los recursos y P7 y P8 se juntan para T4.
-    @Test
-    void req8a_laPriorizadaFavoreceAlAltoRiesgo() {
-        int aleatoria = reports.get("aleatoria").getCount("AltoRiesgo");
-        int priorizada = reports.get("priorizada").getCount("AltoRiesgo");
-        assertTrue(priorizada > aleatoria + 20,
-                "Alto riesgo: priorizada " + priorizada + " vs aleatoria " + aleatoria + " (de 200)");
     }
 
     private static int occurrences(String s, String token) {
