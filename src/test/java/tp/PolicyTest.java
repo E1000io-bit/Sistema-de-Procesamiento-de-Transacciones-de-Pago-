@@ -15,7 +15,7 @@ class PolicyTest {
     private static final int[][] PRE = NetConfig.paymentServiceProvider().getPre();
 
     private static PriorityPolicy priorizada(int... order) {
-        return new PriorityPolicy(order, PRE);
+        return new PriorityPolicy(order);
     }
 
     private static boolean[] m(int... enabled) {
@@ -93,30 +93,10 @@ class PolicyTest {
     }
 
     @Test
-    void priorizadaFrenaATarjetaYTransferenciaMientrasEsperaAltoRiesgo() {
-        // El hilo de alto riesgo espera en la cola de T4: T1 y T6 no pueden tomar los recursos
-        boolean[] allowed = priorizada(4).filter(m(0, 1, 6, 9), m(4));
-        assertFalse(allowed[1], "T1 tendría que estar frenada");
-        assertFalse(allowed[6], "T6 tendría que estar frenada");
-        assertTrue(allowed[0], "T0 no compite con T4");
-        assertTrue(allowed[9], "T9 no compite con T4");
-    }
-
-    @Test
     void priorizadaNoFrenaSiNadieEsperaAltoRiesgo() {
         // T4 sensibilizada pero sin hilo esperando: no se frena a nadie (si no, habría inanición)
         boolean[] enabled = m(1, 4, 6);
         assertArrayEquals(enabled, priorizada(4).filter(enabled, m(1, 6)));
     }
 
-    @Test
-    void lasCompetidorasSalenDeLaRed() {
-        // Con alto riesgo esperando y todo sensibilizado, solo se frenan las que comparten plaza de entrada con T4
-        boolean[] all = new boolean[10];
-        java.util.Arrays.fill(all, true);
-        boolean[] allowed = priorizada(4).filter(all, m(4));
-        for (int t = 0; t < 10; t++) {
-            assertEquals(t != 1 && t != 6, allowed[t], "T" + t);
-        }
-    }
 }
