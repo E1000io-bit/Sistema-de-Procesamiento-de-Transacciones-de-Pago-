@@ -45,11 +45,13 @@ final class SimulationRunner {
     }
 
     /*
-     Corre la red de la Figura 1 con los 7 Worker reales, como Main.
+     3 antes del conflicto (P1 llega a 3), 1 por flujo y 3 después del join (P9 llega a 3).
     */
     static Result runPaymentNet(NetConfig cfg, Policy policy, Path logDir) throws Exception {
         return run(cfg, policy, logDir, m -> List.of(
-                new Thread(new AdmissionWorker(m), "Admision"),
+                new Thread(new AdmissionWorker(m), "Admision-1"),
+                new Thread(new AdmissionWorker(m), "Admision-2"),
+                new Thread(new AdmissionWorker(m), "Admision-3"),
                 new Thread(new CardWorker(m), "Tarjeta"),
                 new Thread(new HighRiskWorker(m), "AltoRiesgo"),
                 new Thread(new TransferWorker(m), "Transferencia"),
