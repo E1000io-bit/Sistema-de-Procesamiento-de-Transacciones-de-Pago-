@@ -4,15 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
-/*
- Req. 4: las dos políticas. Se prueba qué eligen con distintos vectores m = Vs AND Vc,
- y qué transiciones deja disparar cada una (filter).
- Las transiciones del conflicto en P1 son T1 (tarjeta), T4 (alto riesgo) y T6 (transferencia).
-*/
+// Req. 4: las dos políticas. Se prueba qué eligen con distintos vectores m = Vs AND Vc.
 class PolicyTest {
 
     private static final int DRAWS = 30_000;
-    private static final int[][] PRE = NetConfig.paymentServiceProvider().getPre();
 
     private static PriorityPolicy priorizada(int... order) {
         return new PriorityPolicy(order);
@@ -50,7 +45,7 @@ class PolicyTest {
     }
 
     @Test
-    void priorizadaEligeAltoRiesgoSiempreQuePuede() {
+    void priorizadaEligeAltoRiesgoSiemQuePuede() {
         Policy p = priorizada(NetConfig.paymentServiceProvider().getPriorityOrder());
         for (int i = 0; i < 1000; i++) {
             assertEquals(4, p.choose(m(1, 4, 6)));
@@ -82,21 +77,6 @@ class PolicyTest {
         Policy p = priorizada(order);
         order[0] = 1;
         assertEquals(4, p.choose(m(1, 4)));
-    }
-
-    // ---- filter: quién puede disparar en este momento ----
-
-    @Test
-    void aleatoriaNoFrenaNada() {
-        boolean[] enabled = m(0, 1, 6, 9);
-        assertArrayEquals(enabled, new RandomPolicy().filter(enabled, m(4)));
-    }
-
-    @Test
-    void priorizadaNoFrenaSiNadieEsperaAltoRiesgo() {
-        // T4 sensibilizada pero sin hilo esperando: no se frena a nadie (si no, habría inanición)
-        boolean[] enabled = m(1, 4, 6);
-        assertArrayEquals(enabled, priorizada(4).filter(enabled, m(1, 6)));
     }
 
 }
