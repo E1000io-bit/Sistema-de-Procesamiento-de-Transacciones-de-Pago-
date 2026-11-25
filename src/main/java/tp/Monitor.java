@@ -3,38 +3,7 @@ package tp;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-/**
- * Monitor de concurrencia que guía la ejecución de la red de Petri.
- *
- * Sigue el diagrama de secuencia de fireTransition(t):
- *
- * El hilo toma el mutex.
- * Si la simulación terminó, sale con false.
- * Si t está sensibilizada: la dispara, verifica los invariantes de plaza, registra el
- * disparo en el log y calcula m = Vs AND Vc. Si hay alguien para despertar, la política
- * elige a quién y se le pasa el mutex (signal and exit). Si no, se libera el mutex.
- * Si t no está sensibilizada: el hilo se anota en la cola de t, suelta el mutex y se
- * bloquea. Cuando lo despiertan hereda el mutex y vuelve a intentar.
 
- * El monitor no nombra ninguna transición concreta: todo lo saca de la PetriNet, las
- * colas y la política, así que cambiar la red no lo cambia. fireTransition es su único
- * método público.
- *
- * Lo que el monitor espera de PetriNet:
- * isEnable(t): t tiene marcado suficiente y, si es temporal, ya pasó su α.
- * vectorEnable(): transiciones sensibilizadas por marcado (sin mirar el tiempo).
- * timeToWait(t): milisegundos que faltan para que t entre en su ventana de tiempo.
- * Tiene que ser mayor que 0 siempre que t tenga marcado y todavía no haya pasado α
- * (redondeando para arriba): si devolviera 0 por redondeo, el hilo se iría a la cola
- * y nadie lo despertaría.
- * isFinished(): ya se completó la cantidad de invariantes pedida.
- *
- * Errores: si después de un disparo checkPlaceInvariants() tira PlaceInvariantException
- * (o falla la escritura del log), la red quedó en un estado que no se puede seguir usando.
- * El monitor corta la simulación con finish() (despierta a todos y suelta el mutex, para
- * que ningún hilo quede bloqueado y el programa termine, req. 3) y vuelve a tirar la
- * excepción al hilo que disparó, para que se vea qué pasó. Los demás hilos salen con false.
- */
 public class Monitor implements MonitorInterface {
 
     private final Mutex mutex;
@@ -75,16 +44,18 @@ public class Monitor implements MonitorInterface {
                     rdp.fire(transition);
                     rdp.checkPlaceInvariants();
                     TransitionLogger.record(transition, Thread.currentThread().getName());
+
                 } catch (PlaceInvariantException e) {
                     abort("se violo un invariante de plaza despues de disparar T" + transition);
                     throw e;
+
                 } catch (IOException e) {
                     abort("no se pudo escribir el log despues de disparar T" + transition);
                     throw new UncheckedIOException(e);
                 }
 
-                boolean[] vs = rdp.vectorEnable();    // sensibilizadas
                 boolean[] vc = queues.someOneThere();  // con hilos esperando
+                boolean[] vs = rdp.vectorEnable();
                 boolean[] m = and(vs, vc);
 
                 if (!isEmpty(m)) {
@@ -92,6 +63,7 @@ public class Monitor implements MonitorInterface {
                     // Signal and exit: el hilo despertado hereda el mutex, por eso acá no hay release().
                     int next = policy.choose(m);
                     queues.awake(next);
+
                 } else {
                     // [m == 0]: nadie para despertar
                     mutex.release();
@@ -120,6 +92,15 @@ public class Monitor implements MonitorInterface {
         }
         return false; // no se llega nunca: el loop siempre sale con return
     }
+
+    /** CÓDIGO ERRÓNEO, LA POLITICA NO DEBERÍA FILTRAR
+     * SIMPLEMENTE HACER EL CHOOSE LUEGO DE LA TRANSICION DISPARADA
+     * true si la política deja disparar t en este momento. Si la frena, el hilo va a la cola
+     * como si t no estuviera sensibilizada, y lo despiertan cuando la política lo permita.
+
+    private boolean allowedNow(int t) {
+        return rdp.vectorEnable()[t] && queues.someOneThere()[t];
+    } */
 
     /** m = Vs AND Vc, posición por posición. */
     private boolean[] and(boolean[] vs, boolean[] vc) {

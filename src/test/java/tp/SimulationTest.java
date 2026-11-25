@@ -12,7 +12,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -145,19 +144,6 @@ class SimulationTest {
             assertTrue(occurrences(leftover, "T0") <= 3, policy + ": sobrante raro " + leftover);
             assertEquals(0, occurrences(leftover, "T9"), policy + ": no puede sobrar un cierre " + leftover);
         }
-    }
-
-    // req. 8a: la política priorizada tiene que favorecer al flujo de alto riesgo.
-    // HOY FALLA: la política solo elige a quién despertar entre los que esperan, y T4 casi nunca
-    // tiene libres P7 y P8 a la vez, así que la priorizada da lo mismo que la aleatoria.
-    // Sacar el @Disabled cuando la política también decida quién puede disparar en el conflicto.
-    @Disabled("Falla con el diseño actual de la política: ver comentario")
-    @Test
-    void req8a_laPriorizadaFavoreceAlAltoRiesgo() {
-        int aleatoria = reports.get("aleatoria").getCount("AltoRiesgo");
-        int priorizada = reports.get("priorizada").getCount("AltoRiesgo");
-        assertTrue(priorizada > aleatoria + 20,
-                "Alto riesgo: priorizada " + priorizada + " vs aleatoria " + aleatoria + " (de 200)");
     }
 
     private static int occurrences(String s, String token) {

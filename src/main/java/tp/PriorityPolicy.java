@@ -3,7 +3,7 @@ import java.util.Random;
 
 public class PriorityPolicy implements Policy {
 
-    private final int[] priorityOrder;   // transiciones priorizadas de mayor a menor prioridad
+    private final int[] priorityOrder;   // transiciones priorizadas, de mayor a menor prioridad (ej: {4})
     private final Random random;
 
     public PriorityPolicy(int[] priorityOrder) {
@@ -13,20 +13,17 @@ public class PriorityPolicy implements Policy {
 
     @Override
     public int choose(boolean[] m) {
-
         // Si alguna transición priorizada está en m, se elige la primera según el orden
         for (int t : priorityOrder) {
             if (t >= 0 && t < m.length && m[t]) {
                 return t;
             }
         }
-
         // Si ninguna prioritaria está en m, se elige al azar
         return chooseRandom(m);
     }
 
     private int chooseRandom(boolean[] m) {
-
         int count = 0;
         for (boolean b : m) {
             if (b) count++;

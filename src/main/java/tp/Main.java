@@ -6,16 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Punto de entrada del programa (req. 2).
- *
- * <p>Uso, desde la raíz del proyecto:
- * <pre>
- *   mvn compile exec:java -Dexec.args="aleatoria"
- *   mvn compile exec:java -Dexec.args="priorizada"
- * </pre>
- * Sin argumento usa la política aleatoria.
- */
 public class Main {
 
     private static final Path LOG_DIR = Path.of("logs");
@@ -35,7 +25,7 @@ public class Main {
         TransitionLogger.init(LOG_DIR, LOG_NAME);
         Monitor monitor = new Monitor(rdp, policy);
 
-        // 2. Lanzar los 7 hilos y esperar a que terminen todos (req. 3)
+        // 2. Lanzar los 9 hilos y esperar a que terminen todos (req. 3)
         System.out.println("Politica: " + policyName);
         long start = System.nanoTime();
         List<Thread> threads = startWorkers(monitor);
@@ -61,17 +51,17 @@ public class Main {
     }
 
     /**
-     * Crea y arranca los 7 hilos: uno antes del conflicto, uno por cada flujo y tres después
+     * Crea y arranca los 9 hilos: uno antes del conflicto, uno por cada flujo y tres después
      * del join en P9. El nombre de cada Thread es el que queda registrado en el log.
      */
     private static List<Thread> startWorkers(MonitorInterface m) {
         List<Thread> threads = new ArrayList<>();
-        threads.add(new Thread(new SettlementWorker(m), "Liquidacion-"));
         threads.add(new Thread(new CardWorker(m), "Tarjeta"));
         threads.add(new Thread(new HighRiskWorker(m), "AltoRiesgo"));
         threads.add(new Thread(new TransferWorker(m), "Transferencia"));
         for (int i = 1; i <= 3; i++) {
             threads.add(new Thread(new AdmissionWorker(m), "Admision" + i));
+            threads.add(new Thread(new SettlementWorker(m), "Liquidacion-"));
         }
         for (Thread t : threads) {
             t.start();
