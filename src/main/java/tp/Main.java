@@ -1,7 +1,10 @@
 package tp;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -10,6 +13,7 @@ public class Main {
 
     private static final Path LOG_DIR = Path.of("logs");
     private static final String LOG_NAME = "transiciones.log";
+    private static final String LOG_DECISIONS = "decisiones.log";
 
     public static void main(String[] args) throws IOException {
         // Si no se pasa ningún argumento, se usa la política aleatoria
@@ -22,7 +26,7 @@ public class Main {
         NetConfig cfg = NetConfig.paymentServiceProvider();
         Policy policy = createPolicy(policyName, cfg); //Check
         PetriNet rdp = new PetriNet(cfg);
-        TransitionLogger.init(LOG_DIR, LOG_NAME);
+        TransitionLogger.init(LOG_DIR, LOG_NAME, LOG_DECISIONS, rdp.getTransitionCount());
         Monitor monitor = new Monitor(rdp, policy);
 
         // 2. Lanzar los 9 hilos y esperar a que terminen todos (req. 3)
@@ -31,13 +35,15 @@ public class Main {
         List<Thread> threads = startWorkers(monitor);
         joinAll(threads);
         long elapsedMs = (System.nanoTime() - start) / 1_000_000;
-        TransitionLogger.close();
         System.out.println("Terminaron los " + threads.size() + " hilos.");
 
         // 3. Análisis de los invariantes de transición sobre el log, con regex (req. 8 y 13)
         InvariantAnalyzer analyzer = new InvariantAnalyzer(cfg.getTransitionInvariants());
         InvariantReport report = analyzer.analyze(LOG_DIR.resolve(LOG_NAME));
-        printResults(report, elapsedMs);
+        TransitionLogger.decisionsResult(cfg);
+        TransitionLogger.close();
+
+        printResults(report, elapsedMs, LOG_DECISIONS);
     }
 
     /** Crea la política pedida por argumento: aleatoria o priorizada (req. 4). */
@@ -82,7 +88,8 @@ public class Main {
     }
 
     /** Muestra el tiempo de ejecución (req. 10) y la cantidad de cada invariante (req. 8). */
-    private static void printResults(InvariantReport report, long elapsedMs) {
+    private static void printResults(InvariantReport report, long elapsedMs, String decisionsLogPath) {
+
         System.out.printf("Tiempo de ejecucion: %.2f s%n", elapsedMs / 1000.0);
         if (elapsedMs < 20_000 || elapsedMs > 40_000) {
             System.out.println("  Atencion: el req. 10 pide entre 20 y 40 s.");
@@ -90,6 +97,16 @@ public class Main {
         System.out.println("Invariantes de transicion completos: " + report.getTotal());
         System.out.println(report);
         String leftover = report.getLeftover();
-        System.out.println("Sobrante del log: " + (leftover.isEmpty() ? "(vacio)" : leftover));
+        System.out.println("Sobrante del log: " + (leftover.isEmpty() ? "(vacio) \n" : leftover + "\n"));
+
+        System.out.println("Politics distribution: \n");
+        try {
+            List<String> lines = Files.readAllLines(Paths.get(decisionsLogPath));
+            for (String line : lines) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            System.err.println("Error while reading decisions.log: " + e.getMessage());
+        }
     }
 }
