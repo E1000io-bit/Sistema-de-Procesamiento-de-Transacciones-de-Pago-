@@ -36,7 +36,7 @@ public class Monitor implements MonitorInterface {
                 return false;
             }
 
-            k = rdp.isEnable(transition) && allowedNow(transition);
+            k = rdp.isEnable(transition);
 
             if (k) {
                 // [k == true]: t se puede disparar
@@ -44,16 +44,18 @@ public class Monitor implements MonitorInterface {
                     rdp.fire(transition);
                     rdp.checkPlaceInvariants();
                     TransitionLogger.record(transition, Thread.currentThread().getName());
+
                 } catch (PlaceInvariantException e) {
                     abort("se violo un invariante de plaza despues de disparar T" + transition);
                     throw e;
+
                 } catch (IOException e) {
                     abort("no se pudo escribir el log despues de disparar T" + transition);
                     throw new UncheckedIOException(e);
                 }
 
                 boolean[] vc = queues.someOneThere();  // con hilos esperando
-                boolean[] vs = policy.filter(rdp.vectorEnable(), vc); // sensibilizadas que la política deja disparar
+                boolean[] vs = rdp.vectorEnable();
                 boolean[] m = and(vs, vc);
 
                 if (!isEmpty(m)) {
@@ -61,6 +63,7 @@ public class Monitor implements MonitorInterface {
                     // Signal and exit: el hilo despertado hereda el mutex, por eso acá no hay release().
                     int next = policy.choose(m);
                     queues.awake(next);
+
                 } else {
                     // [m == 0]: nadie para despertar
                     mutex.release();
@@ -90,13 +93,14 @@ public class Monitor implements MonitorInterface {
         return false; // no se llega nunca: el loop siempre sale con return
     }
 
-    /**
+    /** CÓDIGO ERRÓNEO, LA POLITICA NO DEBERÍA FILTRAR
+     * SIMPLEMENTE HACER EL CHOOSE LUEGO DE LA TRANSICION DISPARADA
      * true si la política deja disparar t en este momento. Si la frena, el hilo va a la cola
      * como si t no estuviera sensibilizada, y lo despiertan cuando la política lo permita.
-     */
+
     private boolean allowedNow(int t) {
-        return policy.filter(rdp.vectorEnable(), queues.someOneThere())[t];
-    }
+        return rdp.vectorEnable()[t] && queues.someOneThere()[t];
+    } */
 
     /** m = Vs AND Vc, posición por posición. */
     private boolean[] and(boolean[] vs, boolean[] vc) {
