@@ -9,13 +9,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TransitionLogger {
 
     private static BufferedWriter invariantsWriter;
     private static BufferedWriter decisionsWriter;
+  
     private static int[] vecesCandidata;  // en decisiones con 2 o mas candidatas
     private static int[] vecesElegida;  // en decisiones con 2 o mas candidatas
     private static final List<String> decisiones = new ArrayList<>();
@@ -64,8 +64,9 @@ public class TransitionLogger {
         }
     }
 
-    public static void writeDecision(boolean[] wakeable, int next) {
 
+    public static void writeDecision(boolean[] wakeable, int next) {
+ 
         List<Integer> candidates = new ArrayList<>();
         for (int t = 0; t < wakeable.length; t++) {
             if (wakeable[t]) {
@@ -83,6 +84,7 @@ public class TransitionLogger {
                 .collect(Collectors.joining(",")) + " elegida=T" + next);
 
     }
+
 
     public static void decisionsResult(NetConfig netConfig) {
 
