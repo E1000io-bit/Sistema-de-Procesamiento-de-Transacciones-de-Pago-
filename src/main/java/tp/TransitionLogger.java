@@ -3,13 +3,21 @@ package tp;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class TransitionLogger {
 
     private static BufferedWriter invariantsWriter;
+    private static List<Integer> vecesCandidata = new ArrayList<>();  // en decisiones con 2 o mas candidatas
+    private static List<Integer> vecesElegida = new ArrayList<>();  // en decisiones con 2 o mas candidatas
+    private static final List<String> decisiones = new ArrayList<>();
+
     private TransitionLogger() {}
 
     // Crea (o pisa) el archivo del log
@@ -47,6 +55,24 @@ public class TransitionLogger {
         }
     }
 
+    public static void writeDecition(boolean[] wakeable, int next) {
+        List<Integer> candidates = new ArrayList<>();
+        for (int t = 0; t < wakeable.length; t++) {
+            if (wakeable[t]) {
+                candidates.add(t);
+            }
+        }
+        if (candidates.size() < 2) {
+            return;
+        }
+        candidates.forEach( t -> (vecesCandidata.get(t))++ );
+        vecesElegida[next]++;
+
+        decisiones.add("candidatas=" + candidates.stream().map(t -> "T" + t)
+                .collect(Collectors.joining(",")) + " elegida=T" + next);
+
+    }
+
     // ----------------------------------------------------------------------------------------
     /* Privados: siempre se ejecutan con el monitor Logger.class ya tomado */
     private static void writeInvariant(int transition, String threadName) {
@@ -72,6 +98,9 @@ public class TransitionLogger {
             throw new UncheckedIOException("No se pudo escribir en el archivo de rastreo", e);
         }
     }
+
+
+
 
     /** private static String nullToEmpty(String value) {
         return value == null ? "" : value;
