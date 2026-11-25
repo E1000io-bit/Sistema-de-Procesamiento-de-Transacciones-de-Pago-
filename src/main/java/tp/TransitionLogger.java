@@ -9,27 +9,34 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TransitionLogger {
 
     private static BufferedWriter invariantsWriter;
-    private static List<Integer> vecesCandidata = new ArrayList<>();  // en decisiones con 2 o mas candidatas
-    private static List<Integer> vecesElegida = new ArrayList<>();  // en decisiones con 2 o mas candidatas
+    private static BufferedWriter decisionsWriter;
+    private static int[] vecesCandidata;  // en decisiones con 2 o mas candidatas
+    private static int[] vecesElegida;  // en decisiones con 2 o mas candidatas
     private static final List<String> decisiones = new ArrayList<>();
 
     private TransitionLogger() {}
 
     // Crea (o pisa) el archivo del log
-    public static void init(Path outputDirectory, String fileName) throws IOException {
+    public static void init(Path outputDirectory, String resultsLog, String decisionsLog, int transitionsAmount) throws IOException {
         Files.createDirectories(outputDirectory);
+
+        vecesCandidata = new int[transitionsAmount];
+        vecesElegida = new int[transitionsAmount];
 
         Path parent = outputDirectory.getParent();
         if (parent != null) {
             Files.createDirectories(parent);
         }
+
         // Sin opciones = CREATE + TRUNCATE_EXISTING: cada corrida empieza de cero
-        invariantsWriter = Files.newBufferedWriter(outputDirectory.resolve(fileName), StandardCharsets.UTF_8);
+        invariantsWriter = Files.newBufferedWriter(outputDirectory.resolve(resultsLog), StandardCharsets.UTF_8);
+        decisionsWriter = Files.newBufferedWriter(outputDirectory.resolve(decisionsLog), StandardCharsets.UTF_8);
     }
 
     /** Escribe la línea de los invariantes */
@@ -45,17 +52,20 @@ public class TransitionLogger {
     /** Vuelca y cierra el archivo. Llamar despues de que todos los hilos terminaron. */
     public static void close() throws IOException {
 
-        if (invariantsWriter != null) {
+        if (invariantsWriter != null && decisionsWriter != null) {
             try {
                 invariantsWriter.close();
+                decisionsWriter.close();
 
             } finally {
                 invariantsWriter = null;
+                decisionsWriter = null;
             }
         }
     }
 
-    public static void writeDecition(boolean[] wakeable, int next) {
+    public static void writeDecision(boolean[] wakeable, int next) {
+
         List<Integer> candidates = new ArrayList<>();
         for (int t = 0; t < wakeable.length; t++) {
             if (wakeable[t]) {
@@ -65,12 +75,26 @@ public class TransitionLogger {
         if (candidates.size() < 2) {
             return;
         }
-        candidates.forEach( t -> (vecesCandidata.get(t))++ );
+
+        candidates.forEach( t -> vecesCandidata[t]++ );
         vecesElegida[next]++;
 
         decisiones.add("candidatas=" + candidates.stream().map(t -> "T" + t)
                 .collect(Collectors.joining(",")) + " elegida=T" + next);
 
+    }
+
+    public static void decisionsResult(NetConfig netConfig) {
+
+        List<TransitionInvariant> invariants = netConfig.getTransitionInvariants();
+
+        for (int i = 0; i < invariants.size(); i++) {
+            write(decisionsWriter, formatLine(invariants.get(i).getName(), invariants.get(i).getSequence()[1]));
+        }
+    }
+
+    private static String formatLine(String nombre, int transicion) {
+        return nombre + " candidato: " + vecesCandidata[transicion] + ", elegido: " + vecesElegida[transicion];
     }
 
     // ----------------------------------------------------------------------------------------
