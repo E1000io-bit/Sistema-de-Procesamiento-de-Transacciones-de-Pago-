@@ -54,9 +54,9 @@ class SimulationTest {
 
     // req. 3: el programa termina, no quedan hilos activos
     @Test
-    void req3_terminanLosSieteHilos() {
+    void req3_terminanLosNueveHilos() {
         runs.forEach((policy, r) -> {
-            assertEquals(7, r.threads.size(), policy);
+            assertEquals(9, r.threads.size(), policy);
             assertTrue(r.stillAlive.isEmpty(), policy + ": quedaron hilos vivos " + r.stillAlive);
             assertTrue(r.errors.isEmpty(), policy + ": algún hilo tiró una excepción " + r.errors);
         });
