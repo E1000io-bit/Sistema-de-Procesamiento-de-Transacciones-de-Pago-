@@ -1,10 +1,8 @@
 package tp;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -35,15 +33,17 @@ public class Main {
         List<Thread> threads = startWorkers(monitor);
         joinAll(threads);
         long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+        // Primero se escriben las decisiones y se cierran los dos logs: el análisis lee
+        // transiciones.log y necesita que el BufferedWriter ya haya volcado todo al archivo
+        TransitionLogger.decisionsResult(cfg);
+        TransitionLogger.close();
         System.out.println("Terminaron los " + threads.size() + " hilos.");
 
         // 3. Análisis de los invariantes de transición sobre el log, con regex (req. 8 y 13)
         InvariantAnalyzer analyzer = new InvariantAnalyzer(cfg.getTransitionInvariants());
         InvariantReport report = analyzer.analyze(LOG_DIR.resolve(LOG_NAME));
-        TransitionLogger.decisionsResult(cfg);
-        TransitionLogger.close();
 
-        printResults(report, elapsedMs, LOG_DECISIONS);
+        printResults(report, elapsedMs, LOG_DIR.resolve(LOG_DECISIONS));
     }
 
     /** Crea la política pedida por argumento: aleatoria o priorizada (req. 4). */
@@ -88,7 +88,7 @@ public class Main {
     }
 
     /** Muestra el tiempo de ejecución (req. 10) y la cantidad de cada invariante (req. 8). */
-    private static void printResults(InvariantReport report, long elapsedMs, String decisionsLogPath) {
+    private static void printResults(InvariantReport report, long elapsedMs, Path decisionsLog) {
 
         System.out.printf("Tiempo de ejecucion: %.2f s%n", elapsedMs / 1000.0);
         if (elapsedMs < 20_000 || elapsedMs > 40_000) {
@@ -99,14 +99,14 @@ public class Main {
         String leftover = report.getLeftover();
         System.out.println("Sobrante del log: " + (leftover.isEmpty() ? "(vacio) \n" : leftover + "\n"));
 
-        System.out.println("Politics distribution: \n");
+        System.out.println("Decisiones de la politica (solo con 2 o mas candidatas):");
         try {
-            List<String> lines = Files.readAllLines(Paths.get(decisionsLogPath));
+            List<String> lines = Files.readAllLines(decisionsLog);
             for (String line : lines) {
                 System.out.println(line);
             }
         } catch (IOException e) {
-            System.err.println("Error while reading decisions.log: " + e.getMessage());
+            System.err.println("No se pudo leer " + decisionsLog + ": " + e.getMessage());
         }
     }
 }
