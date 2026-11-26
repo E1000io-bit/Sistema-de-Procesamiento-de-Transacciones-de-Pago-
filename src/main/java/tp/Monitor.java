@@ -62,8 +62,9 @@ public class Monitor implements MonitorInterface {
                     // [m != 0]: la política elige a quién despertar.
                     // Signal and exit: el hilo despertado hereda el mutex, por eso acá no hay release().
                     int next = policy.choose(m);
-                    queues.awake(next);
+                    // Antes de awake(): después el mutex ya es del hilo despertado
                     TransitionLogger.writeDecision(m, next);
+                    queues.awake(next);
 
                 } else {
                     // [m == 0]: nadie para despertar

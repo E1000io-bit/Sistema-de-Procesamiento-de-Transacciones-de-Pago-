@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class TransitionLogger {
 
@@ -18,11 +17,15 @@ public class TransitionLogger {
   
     private static int[] vecesCandidata;  // en decisiones con 2 o mas candidatas
     private static int[] vecesElegida;  // en decisiones con 2 o mas candidatas
-    private static final List<String> decisiones = new ArrayList<>();
 
     private TransitionLogger() {}
 
-    // Crea (o pisa) el archivo del log
+    // Versión corta (la usan los tests): el log de decisiones va a decisiones.log en el mismo directorio
+    public static void init(Path outputDirectory, String resultsLog) throws IOException {
+        init(outputDirectory, resultsLog, "decisiones.log", 0);
+    }
+
+    // Crea (o pisa) los archivos del log
     public static void init(Path outputDirectory, String resultsLog, String decisionsLog, int transitionsAmount) throws IOException {
         Files.createDirectories(outputDirectory);
 
@@ -51,20 +54,27 @@ public class TransitionLogger {
 
     /** Vuelca y cierra el archivo. Llamar despues de que todos los hilos terminaron. */
     public static void close() throws IOException {
-
-        if (invariantsWriter != null && decisionsWriter != null) {
-            try {
+        try {
+            if (invariantsWriter != null) {
                 invariantsWriter.close();
-                decisionsWriter.close();
-
+            }
+        } finally {
+            invariantsWriter = null;
+            try {
+                if (decisionsWriter != null) {
+                    decisionsWriter.close();
+                }
             } finally {
-                invariantsWriter = null;
                 decisionsWriter = null;
             }
         }
     }
 
-
+    /**
+     * Cuenta una decisión de la política: wakeable = m (candidatas) y next = la elegida.
+     * La llama el monitor con el mutex tomado y ANTES de awake(next): después del awake el
+     * mutex ya es del hilo despertado y dos hilos tocarían los contadores a la vez.
+     */
     public static void writeDecision(boolean[] wakeable, int next) {
  
         List<Integer> candidates = new ArrayList<>();
@@ -76,12 +86,13 @@ public class TransitionLogger {
         if (candidates.size() < 2) {
             return;
         }
+        if (vecesCandidata.length < wakeable.length) {   // si se inicializó sin la cantidad de transiciones
+            vecesCandidata = new int[wakeable.length];
+            vecesElegida = new int[wakeable.length];
+        }
 
         candidates.forEach( t -> vecesCandidata[t]++ );
         vecesElegida[next]++;
-
-        decisiones.add("candidatas=" + candidates.stream().map(t -> "T" + t)
-                .collect(Collectors.joining(",")) + " elegida=T" + next);
 
     }
 
